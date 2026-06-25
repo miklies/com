@@ -4,8 +4,8 @@
 //  https://supabase.com → Project Settings → API
 // ─────────────────────────────────────────────
 
-const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
-const SUPABASE_ANON_KEY = 'YOUR_ANON_PUBLIC_KEY';
+const SUPABASE_URL = 'https://paxarhwcxqiqgfkmgrhr.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_5u--ElAGIjOxLxbCSbboyg_XjPW61cl';
 
 // Supabase Storage bucket name (어드민에서 이미지 업로드 시 사용)
 const STORAGE_BUCKET = 'project-images';
