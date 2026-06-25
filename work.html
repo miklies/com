@@ -26,19 +26,22 @@
 
     /* Slider side */
     .modal-slider {
-      position: relative; background: var(--paper);
-      aspect-ratio: 4/3; overflow: hidden;
-      align-self: start; position: sticky; top: 0;
+      position: sticky; top: 0;
+      background: var(--paper);
+      align-self: start; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
     }
     .slider-track {
-      display: flex; height: 100%;
+      display: flex; width: 100%;
       transition: transform 0.4s cubic-bezier(0.25,0.46,0.45,0.94);
     }
     .slider-track img {
-      min-width: 100%; height: 100%; object-fit: cover; flex-shrink: 0;
+      min-width: 100%; max-height: 70vh;
+      object-fit: contain;
+      flex-shrink: 0; display: block;
     }
     .slider-track .no-image {
-      min-width: 100%; height: 100%; display: flex;
+      min-width: 100%; height: 240px; display: flex;
       align-items: center; justify-content: center;
       font-size: 0.65rem; letter-spacing: 0.14em;
       text-transform: uppercase; color: var(--light);
@@ -106,9 +109,10 @@
     .modal-link:hover { gap: 14px; }
 
     @media (max-width: 700px) {
-      .project-modal { grid-template-columns: 1fr; }
-      .modal-slider { position: static; aspect-ratio: 4/3; }
-      .modal-info { padding: 28px 24px; }
+      .project-modal { grid-template-columns: 1fr; max-height: 95vh; }
+      .modal-slider { position: static; }
+      .slider-track img { max-height: 50vh; }
+      .modal-info { padding: 24px 20px; }
     }
   </style>
 </head>
