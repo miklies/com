@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Work — Miklies</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="nav-logo">Miklies</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="work.html">Work</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <div class="container">
+      <div class="section-header">
+        <div>
+          <span class="section-label">Work</span>
+          <h1 class="section-title">Selected<br><em style="font-style:italic; color:var(--mid)">projects</em></h1>
+        </div>
+      </div>
+
+      <div class="work-filter" id="filter-bar">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="Brand">Brand</button>
+        <button class="filter-btn" data-filter="UI/UX">UI/UX</button>
+        <button class="filter-btn" data-filter="Typography">Typography</button>
+      </div>
+
+      <div class="work-grid" id="projects-grid">
+        <div class="work-loading">Loading projects…</div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p>© 2026 Miklies</p>
+    <div class="footer-links">
+      <a href="mailto:hello@miklies.com">Email</a>
+      <a href="#" target="_blank" rel="noopener">Instagram</a>
+      <a href="#" target="_blank" rel="noopener">LinkedIn</a>
+    </div>
+  </footer>
+
+  <script src="supabase-config.js"></script>
+  <script src="nav.js"></script>
+  <script>
+    // ── Supabase client (vanilla, no npm needed)
+    const { createClient } = supabase;
+    const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let allProjects = [];
+
+    async function loadProjects() {
+      const grid = document.getElementById('projects-grid');
+
+      try {
+        const { data, error } = await db
+          .from('projects')
+          .select('*')
+          .order('sort_order', { ascending: true });
+
+        if (error) throw error;
+        allProjects = data || [];
+        renderProjects(allProjects);
+      } catch (err) {
+        console.error('Supabase error:', err);
+        grid.innerHTML = `
+          <div class="work-empty">
+            <p>Could not load projects. Check your Supabase config.</p>
+          </div>`;
+      }
+    }
+
+    function getImageUrl(path) {
+      if (!path) return null;
+      if (path.startsWith('http')) return path;
+      const { data } = db.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+      return data?.publicUrl || null;
+    }
+
+    function renderProjects(projects) {
+      const grid = document.getElementById('projects-grid');
+
+      if (!projects.length) {
+        grid.innerHTML = `
+          <div class="work-empty">
+            <p>No projects yet — add them via the <a href="admin.html" style="color:var(--ink)">admin page</a>.</p>
+          </div>`;
+        return;
+      }
+
+      grid.innerHTML = projects.map(p => {
+        const imgUrl = getImageUrl(p.image_path);
+        return `
+          <a href="${p.link || '#'}" class="project-card" data-category="${p.category || ''}">
+            <div class="project-image">
+              ${imgUrl
+                ? `<img src="${imgUrl}" alt="${p.title}" loading="lazy">`
+                : `<span class="img-placeholder">${p.title}</span>`
+              }
+            </div>
+            <div class="project-info">
+              <span class="project-name">${p.title}</span>
+              <span class="project-tag">${p.category || ''}${p.year ? ' — ' + p.year : ''}</span>
+            </div>
+          </a>`;
+      }).join('');
+    }
+
+    // ── Filter
+    document.getElementById('filter-bar').addEventListener('click', e => {
+      const btn = e.target.closest('.filter-btn');
+      if (!btn) return;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const f = btn.dataset.filter;
+      const filtered = f === 'all' ? allProjects : allProjects.filter(p => p.category === f);
+      renderProjects(filtered);
+    });
+
+    loadProjects();
+  </script>
+
+  <!-- Supabase JS CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</body>
+</html>

@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Miklies</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { background: var(--paper); }
+    nav { background: rgba(248,248,246,0.95); }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--white);
+      border: 1px solid var(--rule);
+      padding: 40px;
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      margin: 24px;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+    .modal-header h2 {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 400;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      color: var(--mid);
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px;
+    }
+    .modal-close:hover { color: var(--ink); }
+
+    .admin-empty {
+      padding: 48px 24px;
+      text-align: center;
+      background: var(--white);
+      border: 1px solid var(--rule);
+    }
+    .admin-empty p {
+      font-size: 0.82rem;
+      color: var(--mid);
+    }
+
+    .config-notice {
+      background: #fffbe6;
+      border: 1px solid #f0e06a;
+      padding: 16px 20px;
+      margin-bottom: 32px;
+      font-size: 0.8rem;
+      color: #7a6900;
+      line-height: 1.6;
+    }
+
+    .config-notice code {
+      background: rgba(0,0,0,0.06);
+      padding: 1px 5px;
+      font-family: monospace;
+    }
+
+    .upload-preview { display: none; margin-top: 12px; }
+    .upload-preview img { max-height: 140px; border: 1px solid var(--rule); }
+    .upload-preview.visible { display: block; }
+
+    .sort-handle {
+      cursor: grab;
+      color: var(--light);
+      font-size: 1.1rem;
+      padding: 4px 8px;
+      user-select: none;
+    }
+    .sort-handle:hover { color: var(--mid); }
+
+    .admin-project-row { cursor: default; }
+    .admin-project-row.dragging { opacity: 0.4; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="nav-logo">Miklies</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="work.html">Work</a></li>
+    </ul>
+  </nav>
+
+  <main style="padding-top: 64px;">
+    <div class="admin-wrap">
+
+      <div class="admin-header">
+        <h1>Projects</h1>
+        <button class="btn btn-primary" id="btn-add">+ Add project</button>
+      </div>
+
+      <!-- Supabase config notice (hidden once configured) -->
+      <div class="config-notice" id="config-notice">
+        <strong>Setup needed:</strong> Open <code>supabase-config.js</code> and fill in your
+        <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code>.
+        See <code>README.md</code> for step-by-step instructions.
+      </div>
+
+      <!-- Project list -->
+      <div class="admin-list" id="admin-list">
+        <div class="admin-empty"><p>Loading…</p></div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Add / Edit modal -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title">Add project</h2>
+        <button class="modal-close" id="modal-close" aria-label="Close">×</button>
+      </div>
+
+      <div class="form-group">
+        <label>Title *</label>
+        <input type="text" id="field-title" placeholder="Project name">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Category</label>
+          <select id="field-category">
+            <option value="">— select —</option>
+            <option value="Brand">Brand</option>
+            <option value="UI/UX">UI/UX</option>
+            <option value="Typography">Typography</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Year</label>
+          <input type="number" id="field-year" placeholder="2025" min="2000" max="2099">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="field-desc" placeholder="Short project description…"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Project link</label>
+        <input type="url" id="field-link" placeholder="https://…">
+      </div>
+
+      <div class="form-group">
+        <label>Cover image</label>
+        <div class="upload-zone" id="upload-zone">
+          <input type="file" id="field-image" accept="image/*">
+          <p>Drop image here or click to upload</p>
+          <span class="upload-label">JPG, PNG, WEBP — max 5 MB</span>
+        </div>
+        <div class="upload-preview" id="upload-preview">
+          <img id="preview-img" src="" alt="Preview">
+        </div>
+        <p id="current-image-note" style="font-size:0.72rem; color:var(--mid); margin-top:8px; display:none;">
+          Current image will be kept if no new file is selected.
+        </p>
+      </div>
+
+      <div style="display:flex; gap:12px; justify-content:flex-end; margin-top:32px;">
+        <button class="btn btn-outline" id="btn-cancel">Cancel</button>
+        <button class="btn btn-primary" id="btn-save">Save project</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="nav.js"></script>
+  <script>
+    const { createClient } = supabase;
+    const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // ── Hide config notice if keys look real
+    if (!SUPABASE_URL.includes('YOUR_')) {
+      document.getElementById('config-notice').style.display = 'none';
+    }
+
+    // ── State
+    let projects = [];
+    let editingId = null;
+    let editingImagePath = null;
+
+    // ── DOM refs
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modal-title');
+    const btnAdd = document.getElementById('btn-add');
+    const btnSave = document.getElementById('btn-save');
+    const btnCancel = document.getElementById('btn-cancel');
+    const modalClose = document.getElementById('modal-close');
+    const fieldTitle = document.getElementById('field-title');
+    const fieldCat = document.getElementById('field-category');
+    const fieldYear = document.getElementById('field-year');
+    const fieldDesc = document.getElementById('field-desc');
+    const fieldLink = document.getElementById('field-link');
+    const fieldImage = document.getElementById('field-image');
+    const uploadPreview = document.getElementById('upload-preview');
+    const previewImg = document.getElementById('preview-img');
+    const currentImageNote = document.getElementById('current-image-note');
+    const toast = document.getElementById('toast');
+    const adminList = document.getElementById('admin-list');
+
+    // ── Toast
+    function showToast(msg, duration = 2800) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), duration);
+    }
+
+    // ── Image preview
+    fieldImage.addEventListener('change', () => {
+      const file = fieldImage.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        previewImg.src = e.target.result;
+        uploadPreview.classList.add('visible');
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // ── Drag-over style
+    const uploadZone = document.getElementById('upload-zone');
+    uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+    uploadZone.addEventListener('drop', e => { e.preventDefault(); uploadZone.classList.remove('dragover'); });
+
+    // ── Load projects
+    async function loadProjects() {
+      try {
+        const { data, error } = await db
+          .from('projects')
+          .select('*')
+          .order('sort_order', { ascending: true });
+        if (error) throw error;
+        projects = data || [];
+        renderList();
+      } catch (err) {
+        adminList.innerHTML = `<div class="admin-empty"><p>Could not connect to Supabase. Check your config.</p></div>`;
+        console.error(err);
+      }
+    }
+
+    // ── Render list
+    function getImageUrl(path) {
+      if (!path) return null;
+      if (path.startsWith('http')) return path;
+      const { data } = db.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+      return data?.publicUrl || null;
+    }
+
+    function renderList() {
+      if (!projects.length) {
+        adminList.innerHTML = `<div class="admin-empty"><p>No projects yet. Add your first one above.</p></div>`;
+        return;
+      }
+      adminList.innerHTML = projects.map((p, i) => {
+        const imgUrl = getImageUrl(p.image_path);
+        return `
+          <div class="admin-project-row" data-id="${p.id}" draggable="true">
+            <span class="sort-handle" title="Drag to reorder">⠿</span>
+            ${imgUrl
+              ? `<img class="admin-thumb" src="${imgUrl}" alt="${p.title}">`
+              : `<div class="admin-thumb-placeholder"><span>No img</span></div>`}
+            <div class="admin-project-meta">
+              <h3>${p.title}</h3>
+              <p>${p.category || 'Uncategorized'}${p.year ? ' · ' + p.year : ''}</p>
+            </div>
+            <div class="admin-row-actions">
+              <button class="btn btn-ghost" onclick="openEdit('${p.id}')">Edit</button>
+              <button class="btn btn-danger" onclick="deleteProject('${p.id}')">Delete</button>
+            </div>
+          </div>`;
+      }).join('');
+
+      initDragSort();
+    }
+
+    // ── Drag-to-reorder
+    function initDragSort() {
+      let dragSrc = null;
+      adminList.querySelectorAll('.admin-project-row').forEach(row => {
+        row.addEventListener('dragstart', () => { dragSrc = row; row.classList.add('dragging'); });
+        row.addEventListener('dragend', () => { row.classList.remove('dragging'); dragSrc = null; });
+        row.addEventListener('dragover', e => { e.preventDefault(); });
+        row.addEventListener('drop', async () => {
+          if (!dragSrc || dragSrc === row) return;
+          const rows = [...adminList.querySelectorAll('.admin-project-row')];
+          const from = rows.indexOf(dragSrc);
+          const to = rows.indexOf(row);
+          const reordered = [...projects];
+          const [moved] = reordered.splice(from, 1);
+          reordered.splice(to, 0, moved);
+          projects = reordered;
+          renderList();
+          // Save new order to Supabase
+          await Promise.all(projects.map((p, i) =>
+            db.from('projects').update({ sort_order: i }).eq('id', p.id)
+          ));
+        });
+      });
+    }
+
+    // ── Open add modal
+    btnAdd.addEventListener('click', () => {
+      editingId = null;
+      editingImagePath = null;
+      modalTitle.textContent = 'Add project';
+      fieldTitle.value = '';
+      fieldCat.value = '';
+      fieldYear.value = '';
+      fieldDesc.value = '';
+      fieldLink.value = '';
+      fieldImage.value = '';
+      uploadPreview.classList.remove('visible');
+      currentImageNote.style.display = 'none';
+      modal.classList.add('open');
+      fieldTitle.focus();
+    });
+
+    // ── Open edit modal
+    window.openEdit = (id) => {
+      const p = projects.find(x => x.id === id);
+      if (!p) return;
+      editingId = id;
+      editingImagePath = p.image_path || null;
+      modalTitle.textContent = 'Edit project';
+      fieldTitle.value = p.title || '';
+      fieldCat.value = p.category || '';
+      fieldYear.value = p.year || '';
+      fieldDesc.value = p.description || '';
+      fieldLink.value = p.link || '';
+      fieldImage.value = '';
+
+      // Show current image
+      const imgUrl = getImageUrl(p.image_path);
+      if (imgUrl) {
+        previewImg.src = imgUrl;
+        uploadPreview.classList.add('visible');
+        currentImageNote.style.display = 'block';
+      } else {
+        uploadPreview.classList.remove('visible');
+        currentImageNote.style.display = 'none';
+      }
+
+      modal.classList.add('open');
+      fieldTitle.focus();
+    };
+
+    // ── Close modal
+    function closeModal() { modal.classList.remove('open'); }
+    btnCancel.addEventListener('click', closeModal);
+    modalClose.addEventListener('click', closeModal);
+    modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+    // ── Upload image to Supabase Storage
+    async function uploadImage(file) {
+      const ext = file.name.split('.').pop();
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error } = await db.storage.from(STORAGE_BUCKET).upload(path, file, {
+        contentType: file.type,
+        upsert: false
+      });
+      if (error) throw error;
+      return path;
+    }
+
+    // ── Save project
+    btnSave.addEventListener('click', async () => {
+      const title = fieldTitle.value.trim();
+      if (!title) { fieldTitle.focus(); showToast('Title is required.'); return; }
+
+      btnSave.textContent = 'Saving…';
+      btnSave.disabled = true;
+
+      try {
+        let imagePath = editingImagePath;
+
+        // Upload new image if selected
+        const file = fieldImage.files[0];
+        if (file) {
+          if (file.size > 5 * 1024 * 1024) {
+            showToast('Image must be under 5 MB.');
+            btnSave.textContent = 'Save project';
+            btnSave.disabled = false;
+            return;
+          }
+          imagePath = await uploadImage(file);
+        }
+
+        const payload = {
+          title,
+          category: fieldCat.value || null,
+          year: fieldYear.value ? parseInt(fieldYear.value) : null,
+          description: fieldDesc.value.trim() || null,
+          link: fieldLink.value.trim() || null,
+          image_path: imagePath || null,
+        };
+
+        if (editingId) {
+          const { error } = await db.from('projects').update(payload).eq('id', editingId);
+          if (error) throw error;
+          showToast('Project updated.');
+        } else {
+          payload.sort_order = projects.length;
+          const { error } = await db.from('projects').insert(payload);
+          if (error) throw error;
+          showToast('Project added.');
+        }
+
+        closeModal();
+        await loadProjects();
+      } catch (err) {
+        console.error(err);
+        showToast('Error: ' + (err.message || 'Something went wrong.'));
+      } finally {
+        btnSave.textContent = 'Save project';
+        btnSave.disabled = false;
+      }
+    });
+
+    // ── Delete project
+    window.deleteProject = async (id) => {
+      if (!confirm('Delete this project? This cannot be undone.')) return;
+      try {
+        const { error } = await db.from('projects').delete().eq('id', id);
+        if (error) throw error;
+        showToast('Project deleted.');
+        await loadProjects();
+      } catch (err) {
+        showToast('Error: ' + err.message);
+      }
+    };
+
+    loadProjects();
+  </script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About — Miklies</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="nav-logo">Miklies</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="work.html">Work</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <div class="container">
+      <div class="section-header">
+        <div>
+          <span class="section-label">About</span>
+          <h1 class="section-title">The person<br><em style="font-style:italic; color: var(--mid);">behind the work</em></h1>
+        </div>
+        <a href="work.html" class="hero-cta" style="margin-bottom: 4px;">See projects →</a>
+      </div>
+
+      <div class="about-grid">
+        <!-- Photo column -->
+        <div class="about-photo">
+          <div class="about-photo-frame">
+            <img id="profile-img" src="" alt="Miklies">
+            <span class="about-photo-placeholder" id="photo-placeholder">Photo</span>
+          </div>
+        </div>
+
+        <!-- Text column -->
+        <div class="about-body">
+          <h2>
+            Graphic designer and creative manager working at the intersection
+            of visual identity and digital experience.
+          </h2>
+          <p>
+            Based in Seoul, I work fluently across English and Korean to serve clients
+            and teams in both cultural contexts. My practice spans brand identity,
+            UI/UX systems, and typographic direction — grounded in the belief that
+            good design is invisible when it's working.
+          </p>
+          <p>
+            I've led creative teams and cross-functional projects, with a particular
+            eye for the details that separate considered work from generic output.
+            Typography, hierarchy, and restraint are the tools I reach for first.
+          </p>
+          <p>
+            When I'm not designing, I'm thinking about type classifications, Korean
+            design identity, and the next World Cup qualifier.
+          </p>
+
+          <a href="work.html" class="hero-cta">View my work →</a>
+
+          <div class="about-meta">
+            <div class="meta-item">
+              <span class="label">Based in</span>
+              <span class="value">Seoul, South Korea</span>
+            </div>
+            <div class="meta-item">
+              <span class="label">Languages</span>
+              <span class="value">Korean, English</span>
+            </div>
+            <div class="meta-item">
+              <span class="label">Disciplines</span>
+              <span class="value">Brand · UI/UX · Typography</span>
+            </div>
+            <div class="meta-item">
+              <span class="label">Available for</span>
+              <span class="value">Freelance &amp; Full-time</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p>© 2026 Miklies</p>
+    <div class="footer-links">
+      <a href="mailto:hello@miklies.com">Email</a>
+      <a href="#" target="_blank" rel="noopener">Instagram</a>
+      <a href="#" target="_blank" rel="noopener">LinkedIn</a>
+    </div>
+  </footer>
+
+  <script src="nav.js"></script>
+  <script>
+    // Show profile image if available in localStorage
+    const savedPhoto = localStorage.getItem('profile_photo');
+    if (savedPhoto) {
+      const img = document.getElementById('profile-img');
+      img.src = savedPhoto;
+      img.style.display = 'block';
+      document.getElementById('photo-placeholder').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
