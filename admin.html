@@ -11,89 +11,78 @@
     nav { background: rgba(248,248,246,0.95); }
 
     .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.4);
-      z-index: 500;
-      align-items: center;
-      justify-content: center;
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45); z-index: 500;
+      align-items: center; justify-content: center;
     }
     .modal-overlay.open { display: flex; }
     .modal {
-      background: var(--white);
-      border: 1px solid var(--rule);
-      padding: 40px;
-      width: 100%;
-      max-width: 600px;
-      max-height: 90vh;
-      overflow-y: auto;
-      margin: 24px;
+      background: var(--white); border: 1px solid var(--rule);
+      padding: 40px; width: 100%; max-width: 640px;
+      max-height: 90vh; overflow-y: auto; margin: 24px;
     }
     .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 32px;
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 32px;
     }
-    .modal-header h2 {
-      font-family: var(--font-display);
-      font-size: 1.5rem;
-      font-weight: 400;
-    }
+    .modal-header h2 { font-family: var(--font-display); font-size: 1.5rem; font-weight: 400; }
     .modal-close {
-      background: none;
-      border: none;
-      font-size: 1.4rem;
-      color: var(--mid);
-      cursor: pointer;
-      line-height: 1;
-      padding: 4px;
+      background: none; border: none; font-size: 1.4rem;
+      color: var(--mid); cursor: pointer; line-height: 1; padding: 4px;
     }
     .modal-close:hover { color: var(--ink); }
 
-    .admin-empty {
-      padding: 48px 24px;
-      text-align: center;
-      background: var(--white);
-      border: 1px solid var(--rule);
-    }
-    .admin-empty p {
-      font-size: 0.82rem;
-      color: var(--mid);
-    }
+    .admin-empty { padding: 48px 24px; text-align: center; background: var(--white); border: 1px solid var(--rule); }
+    .admin-empty p { font-size: 0.82rem; color: var(--mid); }
 
     .config-notice {
-      background: #fffbe6;
-      border: 1px solid #f0e06a;
-      padding: 16px 20px;
-      margin-bottom: 32px;
-      font-size: 0.8rem;
-      color: #7a6900;
-      line-height: 1.6;
+      background: #fffbe6; border: 1px solid #f0e06a;
+      padding: 16px 20px; margin-bottom: 32px;
+      font-size: 0.8rem; color: #7a6900; line-height: 1.6;
     }
+    .config-notice code { background: rgba(0,0,0,0.06); padding: 1px 5px; font-family: monospace; }
 
-    .config-notice code {
-      background: rgba(0,0,0,0.06);
-      padding: 1px 5px;
-      font-family: monospace;
-    }
-
-    .upload-preview { display: none; margin-top: 12px; }
-    .upload-preview img { max-height: 140px; border: 1px solid var(--rule); }
-    .upload-preview.visible { display: block; }
-
-    .sort-handle {
-      cursor: grab;
-      color: var(--light);
-      font-size: 1.1rem;
-      padding: 4px 8px;
-      user-select: none;
-    }
+    .sort-handle { cursor: grab; color: var(--light); font-size: 1.1rem; padding: 4px 8px; user-select: none; }
     .sort-handle:hover { color: var(--mid); }
-
     .admin-project-row { cursor: default; }
     .admin-project-row.dragging { opacity: 0.4; }
+
+    /* Multi-image upload */
+    .images-upload-area { display: flex; flex-direction: column; gap: 12px; }
+
+    .upload-zone {
+      border: 1px dashed var(--rule); padding: 28px;
+      text-align: center; cursor: pointer;
+      transition: border-color 0.2s, background 0.2s; position: relative;
+    }
+    .upload-zone:hover, .upload-zone.dragover { border-color: var(--ink); background: var(--paper); }
+    .upload-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .upload-zone p { font-size: 0.78rem; color: var(--mid); }
+    .upload-zone .upload-label { font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--light); margin-top: 6px; display: block; }
+
+    .image-previews {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 12px;
+    }
+    .preview-item {
+      position: relative; aspect-ratio: 1; background: var(--paper); border: 1px solid var(--rule); overflow: hidden;
+    }
+    .preview-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .preview-item .remove-img {
+      position: absolute; top: 4px; right: 4px;
+      background: rgba(0,0,0,0.6); color: white; border: none;
+      width: 20px; height: 20px; border-radius: 50%; cursor: pointer;
+      font-size: 0.7rem; line-height: 20px; text-align: center; padding: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .preview-item .img-label {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: rgba(0,0,0,0.5); color: white;
+      font-size: 0.55rem; letter-spacing: 0.08em; text-transform: uppercase;
+      text-align: center; padding: 3px;
+    }
+    .preview-item.cover-img { outline: 2px solid var(--ink); outline-offset: -2px; }
   </style>
 </head>
 <body>
@@ -108,24 +97,19 @@
 
   <main style="padding-top: 64px;">
     <div class="admin-wrap">
-
       <div class="admin-header">
         <h1>Projects</h1>
         <button class="btn btn-primary" id="btn-add">+ Add project</button>
       </div>
 
-      <!-- Supabase config notice (hidden once configured) -->
       <div class="config-notice" id="config-notice">
         <strong>Setup needed:</strong> Open <code>supabase-config.js</code> and fill in your
         <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code>.
-        See <code>README.md</code> for step-by-step instructions.
       </div>
 
-      <!-- Project list -->
       <div class="admin-list" id="admin-list">
         <div class="admin-empty"><p>Loading…</p></div>
       </div>
-
     </div>
   </main>
 
@@ -161,7 +145,7 @@
 
       <div class="form-group">
         <label>Description</label>
-        <textarea id="field-desc" placeholder="Short project description…"></textarea>
+        <textarea id="field-desc" placeholder="Project description…"></textarea>
       </div>
 
       <div class="form-group">
@@ -169,19 +153,17 @@
         <input type="url" id="field-link" placeholder="https://…">
       </div>
 
+      <!-- Multi-image upload -->
       <div class="form-group">
-        <label>Cover image</label>
-        <div class="upload-zone" id="upload-zone">
-          <input type="file" id="field-image" accept="image/*">
-          <p>Drop image here or click to upload</p>
-          <span class="upload-label">JPG, PNG, WEBP — max 5 MB</span>
+        <label>Images <span style="color:var(--light); font-size:0.65rem; letter-spacing:0.1em; text-transform:uppercase; margin-left:8px;">Max 5 — first image = cover</span></label>
+        <div class="images-upload-area">
+          <div class="upload-zone" id="upload-zone">
+            <input type="file" id="field-images" accept="image/*" multiple>
+            <p>Drop images here or click to upload</p>
+            <span class="upload-label">JPG, PNG, WEBP — max 5 MB each</span>
+          </div>
+          <div class="image-previews" id="image-previews"></div>
         </div>
-        <div class="upload-preview" id="upload-preview">
-          <img id="preview-img" src="" alt="Preview">
-        </div>
-        <p id="current-image-note" style="font-size:0.72rem; color:var(--mid); margin-top:8px; display:none;">
-          Current image will be kept if no new file is selected.
-        </p>
       </div>
 
       <div style="display:flex; gap:12px; justify-content:flex-end; margin-top:32px;">
@@ -191,7 +173,6 @@
     </div>
   </div>
 
-  <!-- Toast -->
   <div class="toast" id="toast"></div>
 
   <script src="supabase-config.js"></script>
@@ -200,17 +181,15 @@
     const { createClient } = supabase;
     const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // ── Hide config notice if keys look real
     if (!SUPABASE_URL.includes('YOUR_')) {
       document.getElementById('config-notice').style.display = 'none';
     }
 
-    // ── State
     let projects = [];
     let editingId = null;
-    let editingImagePath = null;
+    // imageSlots: array of { file: File|null, existingPath: string|null, previewUrl: string }
+    let imageSlots = [];
 
-    // ── DOM refs
     const modal = document.getElementById('modal');
     const modalTitle = document.getElementById('modal-title');
     const btnAdd = document.getElementById('btn-add');
@@ -222,55 +201,18 @@
     const fieldYear = document.getElementById('field-year');
     const fieldDesc = document.getElementById('field-desc');
     const fieldLink = document.getElementById('field-link');
-    const fieldImage = document.getElementById('field-image');
-    const uploadPreview = document.getElementById('upload-preview');
-    const previewImg = document.getElementById('preview-img');
-    const currentImageNote = document.getElementById('current-image-note');
+    const fieldImages = document.getElementById('field-images');
+    const imagePreviews = document.getElementById('image-previews');
+    const uploadZone = document.getElementById('upload-zone');
     const toast = document.getElementById('toast');
     const adminList = document.getElementById('admin-list');
 
-    // ── Toast
     function showToast(msg, duration = 2800) {
       toast.textContent = msg;
       toast.classList.add('show');
       setTimeout(() => toast.classList.remove('show'), duration);
     }
 
-    // ── Image preview
-    fieldImage.addEventListener('change', () => {
-      const file = fieldImage.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = e => {
-        previewImg.src = e.target.result;
-        uploadPreview.classList.add('visible');
-      };
-      reader.readAsDataURL(file);
-    });
-
-    // ── Drag-over style
-    const uploadZone = document.getElementById('upload-zone');
-    uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
-    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
-    uploadZone.addEventListener('drop', e => { e.preventDefault(); uploadZone.classList.remove('dragover'); });
-
-    // ── Load projects
-    async function loadProjects() {
-      try {
-        const { data, error } = await db
-          .from('projects')
-          .select('*')
-          .order('sort_order', { ascending: true });
-        if (error) throw error;
-        projects = data || [];
-        renderList();
-      } catch (err) {
-        adminList.innerHTML = `<div class="admin-empty"><p>Could not connect to Supabase. Check your config.</p></div>`;
-        console.error(err);
-      }
-    }
-
-    // ── Render list
     function getImageUrl(path) {
       if (!path) return null;
       if (path.startsWith('http')) return path;
@@ -278,22 +220,83 @@
       return data?.publicUrl || null;
     }
 
+    // ── Render image previews
+    function renderPreviews() {
+      if (!imageSlots.length) { imagePreviews.innerHTML = ''; return; }
+      imagePreviews.innerHTML = imageSlots.map((slot, i) => `
+        <div class="preview-item ${i === 0 ? 'cover-img' : ''}" data-index="${i}">
+          <img src="${slot.previewUrl}" alt="">
+          <button class="remove-img" data-index="${i}" title="Remove">×</button>
+          <span class="img-label">${i === 0 ? 'Cover' : i + 1}</span>
+        </div>
+      `).join('');
+
+      imagePreviews.querySelectorAll('.remove-img').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          const idx = parseInt(btn.dataset.index);
+          imageSlots.splice(idx, 1);
+          renderPreviews();
+        });
+      });
+    }
+
+    // ── File input handler
+    fieldImages.addEventListener('change', () => {
+      const files = [...fieldImages.files];
+      const remaining = 5 - imageSlots.length;
+      const toAdd = files.slice(0, remaining);
+
+      if (files.length > remaining) {
+        showToast(`최대 5장까지 업로드할 수 있어요. ${files.length - remaining}장은 제외됐어요.`);
+      }
+
+      toAdd.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          imageSlots.push({ file, existingPath: null, previewUrl: e.target.result });
+          renderPreviews();
+        };
+        reader.readAsDataURL(file);
+      });
+      fieldImages.value = '';
+    });
+
+    // Drag-over style
+    uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+    uploadZone.addEventListener('drop', e => { e.preventDefault(); uploadZone.classList.remove('dragover'); });
+
+    // ── Load projects
+    async function loadProjects() {
+      try {
+        const { data, error } = await db.from('projects').select('*').order('sort_order', { ascending: true });
+        if (error) throw error;
+        projects = data || [];
+        renderList();
+      } catch (err) {
+        adminList.innerHTML = `<div class="admin-empty"><p>Could not connect to Supabase.</p></div>`;
+        console.error(err);
+      }
+    }
+
     function renderList() {
       if (!projects.length) {
         adminList.innerHTML = `<div class="admin-empty"><p>No projects yet. Add your first one above.</p></div>`;
         return;
       }
-      adminList.innerHTML = projects.map((p, i) => {
-        const imgUrl = getImageUrl(p.image_path);
+      adminList.innerHTML = projects.map(p => {
+        const allPaths = [p.image_path, ...(p.images || [])].filter(Boolean);
+        const thumbUrl = getImageUrl(allPaths[0]);
         return `
           <div class="admin-project-row" data-id="${p.id}" draggable="true">
             <span class="sort-handle" title="Drag to reorder">⠿</span>
-            ${imgUrl
-              ? `<img class="admin-thumb" src="${imgUrl}" alt="${p.title}">`
+            ${thumbUrl
+              ? `<img class="admin-thumb" src="${thumbUrl}" alt="${p.title}">`
               : `<div class="admin-thumb-placeholder"><span>No img</span></div>`}
             <div class="admin-project-meta">
               <h3>${p.title}</h3>
-              <p>${p.category || 'Uncategorized'}${p.year ? ' · ' + p.year : ''}</p>
+              <p>${p.category || 'Uncategorized'}${p.year ? ' · ' + p.year : ''}${allPaths.length > 1 ? ' · ' + allPaths.length + ' images' : ''}</p>
             </div>
             <div class="admin-row-actions">
               <button class="btn btn-ghost" onclick="openEdit('${p.id}')">Edit</button>
@@ -301,17 +304,15 @@
             </div>
           </div>`;
       }).join('');
-
       initDragSort();
     }
 
-    // ── Drag-to-reorder
     function initDragSort() {
       let dragSrc = null;
       adminList.querySelectorAll('.admin-project-row').forEach(row => {
         row.addEventListener('dragstart', () => { dragSrc = row; row.classList.add('dragging'); });
         row.addEventListener('dragend', () => { row.classList.remove('dragging'); dragSrc = null; });
-        row.addEventListener('dragover', e => { e.preventDefault(); });
+        row.addEventListener('dragover', e => e.preventDefault());
         row.addEventListener('drop', async () => {
           if (!dragSrc || dragSrc === row) return;
           const rows = [...adminList.querySelectorAll('.admin-project-row')];
@@ -322,7 +323,6 @@
           reordered.splice(to, 0, moved);
           projects = reordered;
           renderList();
-          // Save new order to Supabase
           await Promise.all(projects.map((p, i) =>
             db.from('projects').update({ sort_order: i }).eq('id', p.id)
           ));
@@ -330,71 +330,63 @@
       });
     }
 
-    // ── Open add modal
-    btnAdd.addEventListener('click', () => {
+    function resetModal() {
       editingId = null;
-      editingImagePath = null;
-      modalTitle.textContent = 'Add project';
+      imageSlots = [];
       fieldTitle.value = '';
       fieldCat.value = '';
       fieldYear.value = '';
       fieldDesc.value = '';
       fieldLink.value = '';
-      fieldImage.value = '';
-      uploadPreview.classList.remove('visible');
-      currentImageNote.style.display = 'none';
+      fieldImages.value = '';
+      renderPreviews();
+    }
+
+    btnAdd.addEventListener('click', () => {
+      resetModal();
+      modalTitle.textContent = 'Add project';
       modal.classList.add('open');
       fieldTitle.focus();
     });
 
-    // ── Open edit modal
     window.openEdit = (id) => {
       const p = projects.find(x => x.id === id);
       if (!p) return;
+      resetModal();
       editingId = id;
-      editingImagePath = p.image_path || null;
       modalTitle.textContent = 'Edit project';
       fieldTitle.value = p.title || '';
       fieldCat.value = p.category || '';
       fieldYear.value = p.year || '';
       fieldDesc.value = p.description || '';
       fieldLink.value = p.link || '';
-      fieldImage.value = '';
 
-      // Show current image
-      const imgUrl = getImageUrl(p.image_path);
-      if (imgUrl) {
-        previewImg.src = imgUrl;
-        uploadPreview.classList.add('visible');
-        currentImageNote.style.display = 'block';
-      } else {
-        uploadPreview.classList.remove('visible');
-        currentImageNote.style.display = 'none';
-      }
-
+      // Load existing images into slots
+      const allPaths = [p.image_path, ...(p.images || [])].filter(Boolean);
+      allPaths.forEach(path => {
+        const url = getImageUrl(path);
+        if (url) imageSlots.push({ file: null, existingPath: path, previewUrl: url });
+      });
+      renderPreviews();
       modal.classList.add('open');
       fieldTitle.focus();
     };
 
-    // ── Close modal
     function closeModal() { modal.classList.remove('open'); }
     btnCancel.addEventListener('click', closeModal);
     modalClose.addEventListener('click', closeModal);
     modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
 
-    // ── Upload image to Supabase Storage
     async function uploadImage(file) {
       const ext = file.name.split('.').pop();
       const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       const { error } = await db.storage.from(STORAGE_BUCKET).upload(path, file, {
-        contentType: file.type,
-        upsert: false
+        contentType: file.type, upsert: false
       });
       if (error) throw error;
       return path;
     }
 
-    // ── Save project
     btnSave.addEventListener('click', async () => {
       const title = fieldTitle.value.trim();
       if (!title) { fieldTitle.focus(); showToast('Title is required.'); return; }
@@ -403,19 +395,23 @@
       btnSave.disabled = true;
 
       try {
-        let imagePath = editingImagePath;
-
-        // Upload new image if selected
-        const file = fieldImage.files[0];
-        if (file) {
-          if (file.size > 5 * 1024 * 1024) {
-            showToast('Image must be under 5 MB.');
-            btnSave.textContent = 'Save project';
-            btnSave.disabled = false;
-            return;
+        // Upload new files, keep existing paths
+        const finalPaths = [];
+        for (const slot of imageSlots) {
+          if (slot.file) {
+            if (slot.file.size > 5 * 1024 * 1024) {
+              showToast(`${slot.file.name} is over 5 MB — skipped.`);
+              continue;
+            }
+            const path = await uploadImage(slot.file);
+            finalPaths.push(path);
+          } else if (slot.existingPath) {
+            finalPaths.push(slot.existingPath);
           }
-          imagePath = await uploadImage(file);
         }
+
+        const coverPath = finalPaths[0] || null;
+        const extraPaths = finalPaths.slice(1);
 
         const payload = {
           title,
@@ -423,7 +419,8 @@
           year: fieldYear.value ? parseInt(fieldYear.value) : null,
           description: fieldDesc.value.trim() || null,
           link: fieldLink.value.trim() || null,
-          image_path: imagePath || null,
+          image_path: coverPath,
+          images: extraPaths,
         };
 
         if (editingId) {
@@ -448,7 +445,6 @@
       }
     });
 
-    // ── Delete project
     window.deleteProject = async (id) => {
       if (!confirm('Delete this project? This cannot be undone.')) return;
       try {

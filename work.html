@@ -6,6 +6,111 @@
   <title>Work — Miklies</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* ── Project modal ── */
+    .project-modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.85); z-index: 400;
+      align-items: center; justify-content: center;
+    }
+    .project-modal-overlay.open { display: flex; }
+
+    .project-modal {
+      background: var(--white);
+      width: 100%; max-width: 900px;
+      max-height: 92vh; overflow-y: auto;
+      margin: 24px;
+      display: grid;
+      grid-template-columns: 1fr 320px;
+    }
+
+    /* Slider side */
+    .modal-slider {
+      position: relative; background: var(--paper);
+      aspect-ratio: 4/3; overflow: hidden;
+      align-self: start; position: sticky; top: 0;
+    }
+    .slider-track {
+      display: flex; height: 100%;
+      transition: transform 0.4s cubic-bezier(0.25,0.46,0.45,0.94);
+    }
+    .slider-track img {
+      min-width: 100%; height: 100%; object-fit: cover; flex-shrink: 0;
+    }
+    .slider-track .no-image {
+      min-width: 100%; height: 100%; display: flex;
+      align-items: center; justify-content: center;
+      font-size: 0.65rem; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--light);
+    }
+
+    .slider-btn {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      background: rgba(255,255,255,0.9); border: none; cursor: pointer;
+      width: 36px; height: 36px; display: flex; align-items: center;
+      justify-content: center; font-size: 1rem; color: var(--ink);
+      transition: background 0.2s; z-index: 10;
+    }
+    .slider-btn:hover { background: white; }
+    .slider-btn.prev { left: 12px; }
+    .slider-btn.next { right: 12px; }
+    .slider-btn:disabled { opacity: 0.25; cursor: default; }
+
+    .slider-dots {
+      position: absolute; bottom: 12px; left: 0; right: 0;
+      display: flex; justify-content: center; gap: 6px;
+    }
+    .slider-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: rgba(255,255,255,0.5); border: none; cursor: pointer;
+      padding: 0; transition: background 0.2s;
+    }
+    .slider-dot.active { background: white; }
+
+    /* Info side */
+    .modal-info {
+      padding: 40px 36px; display: flex;
+      flex-direction: column; gap: 24px;
+    }
+    .modal-close-btn {
+      align-self: flex-end; background: none; border: none;
+      font-size: 1.3rem; color: var(--mid); cursor: pointer; line-height: 1;
+      margin-bottom: -8px;
+    }
+    .modal-close-btn:hover { color: var(--ink); }
+
+    .modal-category {
+      font-size: 0.65rem; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--mid);
+    }
+    .modal-title {
+      font-family: var(--font-display); font-size: 2rem;
+      font-weight: 400; line-height: 1.1; letter-spacing: -0.01em;
+    }
+    .modal-year {
+      font-size: 0.75rem; color: var(--light);
+      letter-spacing: 0.08em;
+    }
+    .modal-desc {
+      font-size: 0.88rem; color: var(--mid);
+      line-height: 1.85; border-top: 1px solid var(--rule);
+      padding-top: 24px;
+    }
+    .modal-link {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--ink); text-decoration: none;
+      border-bottom: 1px solid var(--ink); padding-bottom: 3px;
+      transition: gap 0.2s; margin-top: auto;
+    }
+    .modal-link:hover { gap: 14px; }
+
+    @media (max-width: 700px) {
+      .project-modal { grid-template-columns: 1fr; }
+      .modal-slider { position: static; aspect-ratio: 4/3; }
+      .modal-info { padding: 28px 24px; }
+    }
+  </style>
 </head>
 <body>
   <nav>
@@ -48,33 +153,55 @@
     </div>
   </footer>
 
+  <!-- Project detail modal -->
+  <div class="project-modal-overlay" id="project-modal">
+    <div class="project-modal">
+      <!-- Image slider -->
+      <div class="modal-slider" id="modal-slider">
+        <div class="slider-track" id="slider-track"></div>
+        <button class="slider-btn prev" id="slider-prev">←</button>
+        <button class="slider-btn next" id="slider-next">→</button>
+        <div class="slider-dots" id="slider-dots"></div>
+      </div>
+
+      <!-- Info -->
+      <div class="modal-info">
+        <button class="modal-close-btn" id="modal-close">×</button>
+        <div>
+          <p class="modal-category" id="modal-category"></p>
+          <h2 class="modal-title" id="modal-title"></h2>
+          <p class="modal-year" id="modal-year"></p>
+        </div>
+        <p class="modal-desc" id="modal-desc"></p>
+        <a href="#" class="modal-link" id="modal-link" target="_blank" rel="noopener" style="display:none;">
+          Visit project →
+        </a>
+      </div>
+    </div>
+  </div>
+
   <script src="supabase-config.js"></script>
   <script src="nav.js"></script>
   <script>
-    // ── Supabase client (vanilla, no npm needed)
     const { createClient } = supabase;
     const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let allProjects = [];
+    let sliderImages = [];
+    let currentSlide = 0;
 
+    // ── Supabase
     async function loadProjects() {
       const grid = document.getElementById('projects-grid');
-
       try {
         const { data, error } = await db
-          .from('projects')
-          .select('*')
-          .order('sort_order', { ascending: true });
-
+          .from('projects').select('*').order('sort_order', { ascending: true });
         if (error) throw error;
         allProjects = data || [];
         renderProjects(allProjects);
       } catch (err) {
         console.error('Supabase error:', err);
-        grid.innerHTML = `
-          <div class="work-empty">
-            <p>Could not load projects. Check your Supabase config.</p>
-          </div>`;
+        grid.innerHTML = `<div class="work-empty"><p>Could not load projects.</p></div>`;
       }
     }
 
@@ -87,32 +214,118 @@
 
     function renderProjects(projects) {
       const grid = document.getElementById('projects-grid');
-
       if (!projects.length) {
-        grid.innerHTML = `
-          <div class="work-empty">
-            <p>No projects yet — add them via the <a href="admin.html" style="color:var(--ink)">admin page</a>.</p>
-          </div>`;
+        grid.innerHTML = `<div class="work-empty"><p>No projects yet.</p></div>`;
         return;
       }
-
       grid.innerHTML = projects.map(p => {
-        const imgUrl = getImageUrl(p.image_path);
+        const allPaths = [p.image_path, ...(p.images || [])].filter(Boolean);
+        const coverUrl = getImageUrl(allPaths[0]);
         return `
-          <a href="${p.link || '#'}" class="project-card" data-category="${p.category || ''}">
+          <div class="project-card" data-id="${p.id}" style="cursor:pointer;">
             <div class="project-image">
-              ${imgUrl
-                ? `<img src="${imgUrl}" alt="${p.title}" loading="lazy">`
-                : `<span class="img-placeholder">${p.title}</span>`
-              }
+              ${coverUrl
+                ? `<img src="${coverUrl}" alt="${p.title}" loading="lazy">`
+                : `<span class="img-placeholder">${p.title}</span>`}
             </div>
             <div class="project-info">
               <span class="project-name">${p.title}</span>
               <span class="project-tag">${p.category || ''}${p.year ? ' — ' + p.year : ''}</span>
             </div>
-          </a>`;
+          </div>`;
       }).join('');
+
+      grid.querySelectorAll('.project-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const p = allProjects.find(x => x.id === card.dataset.id);
+          if (p) openModal(p);
+        });
+      });
     }
+
+    // ── Modal
+    const projectModal = document.getElementById('project-modal');
+    const sliderTrack = document.getElementById('slider-track');
+    const sliderDots = document.getElementById('slider-dots');
+    const sliderPrev = document.getElementById('slider-prev');
+    const sliderNext = document.getElementById('slider-next');
+
+    function openModal(p) {
+      // Collect all image URLs
+      const allPaths = [p.image_path, ...(p.images || [])].filter(Boolean);
+      sliderImages = allPaths.map(path => getImageUrl(path)).filter(Boolean);
+
+      // Build slider
+      if (sliderImages.length) {
+        sliderTrack.innerHTML = sliderImages.map(url =>
+          `<img src="${url}" alt="${p.title}">`
+        ).join('');
+      } else {
+        sliderTrack.innerHTML = `<div class="no-image">No image</div>`;
+      }
+
+      // Dots
+      sliderDots.innerHTML = sliderImages.length > 1
+        ? sliderImages.map((_, i) => `<button class="slider-dot${i === 0 ? ' active' : ''}" data-i="${i}"></button>`).join('')
+        : '';
+
+      sliderDots.querySelectorAll('.slider-dot').forEach(dot => {
+        dot.addEventListener('click', () => goTo(parseInt(dot.dataset.i)));
+      });
+
+      // Show/hide slider controls
+      const hasMultiple = sliderImages.length > 1;
+      sliderPrev.style.display = hasMultiple ? '' : 'none';
+      sliderNext.style.display = hasMultiple ? '' : 'none';
+
+      goTo(0);
+
+      // Info
+      document.getElementById('modal-category').textContent = p.category || '';
+      document.getElementById('modal-title').textContent = p.title;
+      document.getElementById('modal-year').textContent = p.year || '';
+      document.getElementById('modal-desc').textContent = p.description || '';
+
+      const linkEl = document.getElementById('modal-link');
+      if (p.link) {
+        linkEl.href = p.link;
+        linkEl.style.display = 'inline-flex';
+      } else {
+        linkEl.style.display = 'none';
+      }
+
+      projectModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      projectModal.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function goTo(index) {
+      currentSlide = Math.max(0, Math.min(index, sliderImages.length - 1));
+      sliderTrack.style.transform = `translateX(-${currentSlide * 100}%)`;
+      sliderPrev.disabled = currentSlide === 0;
+      sliderNext.disabled = currentSlide === sliderImages.length - 1;
+      sliderDots.querySelectorAll('.slider-dot').forEach((dot, i) => {
+        dot.classList.toggle('active', i === currentSlide);
+      });
+    }
+
+    sliderPrev.addEventListener('click', () => goTo(currentSlide - 1));
+    sliderNext.addEventListener('click', () => goTo(currentSlide + 1));
+
+    document.getElementById('modal-close').addEventListener('click', closeModal);
+    projectModal.addEventListener('click', e => { if (e.target === projectModal) closeModal(); });
+
+    // Keyboard nav
+    document.addEventListener('keydown', e => {
+      if (!projectModal.classList.contains('open')) return;
+      if (e.key === 'Escape') closeModal();
+      if (e.key === 'ArrowLeft') goTo(currentSlide - 1);
+      if (e.key === 'ArrowRight') goTo(currentSlide + 1);
+    });
 
     // ── Filter
     document.getElementById('filter-bar').addEventListener('click', e => {
@@ -121,12 +334,10 @@
       document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const f = btn.dataset.filter;
-      const filtered = f === 'all' ? allProjects : allProjects.filter(p => p.category === f);
-      renderProjects(filtered);
+      renderProjects(f === 'all' ? allProjects : allProjects.filter(p => p.category === f));
     });
 
     loadProjects();
   </script>
-
 </body>
 </html>
