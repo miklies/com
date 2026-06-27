@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project — Miklies</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    .project-detail {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 48px 48px 120px;
+    }
+
+    /* Back link */
+    .back-link {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--mid); text-decoration: none;
+      margin-bottom: 56px;
+      transition: color 0.2s, gap 0.2s;
+    }
+    .back-link:hover { color: var(--ink); gap: 14px; }
+
+    /* Header */
+    .project-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 48px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid var(--rule);
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .project-header-left {}
+    .project-detail-category {
+      font-size: 0.68rem; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--mid);
+      margin-bottom: 12px; display: block;
+    }
+    .project-detail-title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 400; line-height: 1.05;
+      letter-spacing: -0.015em;
+    }
+    .project-header-right {
+      display: flex; flex-direction: column;
+      align-items: flex-end; gap: 8px;
+      flex-shrink: 0;
+    }
+    .project-detail-year {
+      font-size: 0.75rem; color: var(--light);
+      letter-spacing: 0.08em;
+    }
+    .project-ext-link {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--ink); text-decoration: none;
+      border-bottom: 1px solid var(--ink); padding-bottom: 3px;
+      transition: gap 0.2s;
+    }
+    .project-ext-link:hover { gap: 14px; }
+
+    /* Layout: slider + info */
+    .project-body {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 64px;
+      align-items: start;
+    }
+
+    /* Slider */
+    .detail-slider {
+      position: sticky; top: 80px;
+      background: var(--paper);
+      overflow: hidden;
+    }
+    .detail-track {
+      display: flex;
+      transition: transform 0.42s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .detail-track img {
+      min-width: 100%;
+      max-height: 80vh;
+      object-fit: contain;
+      flex-shrink: 0;
+      display: block;
+    }
+    .detail-track .no-image {
+      min-width: 100%; height: 320px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--light);
+    }
+
+    /* Slider controls */
+    .slider-controls {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 16px 0 0;
+    }
+    .slider-arrows { display: flex; gap: 4px; }
+    .s-btn {
+      background: none; border: 1px solid var(--rule);
+      color: var(--ink); width: 36px; height: 36px;
+      cursor: pointer; font-size: 0.9rem;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .s-btn:hover:not(:disabled) { border-color: var(--ink); background: var(--ink); color: var(--white); }
+    .s-btn:disabled { opacity: 0.2; cursor: default; }
+
+    .slider-counter {
+      font-size: 0.7rem; letter-spacing: 0.1em;
+      color: var(--mid);
+    }
+
+    /* Thumbnail strip */
+    .thumb-strip {
+      display: flex; gap: 6px; margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    .thumb {
+      width: 56px; height: 42px; object-fit: cover;
+      cursor: pointer; border: 2px solid transparent;
+      opacity: 0.5; transition: opacity 0.2s, border-color 0.2s;
+      background: var(--rule);
+    }
+    .thumb.active { border-color: var(--ink); opacity: 1; }
+
+    /* Info column */
+    .project-info-col {
+      display: flex; flex-direction: column; gap: 32px;
+      padding-top: 4px;
+    }
+    .project-detail-desc {
+      font-size: 0.9rem; color: var(--mid);
+      line-height: 1.85;
+    }
+    .project-info-divider {
+      border: none; border-top: 1px solid var(--rule);
+    }
+
+    /* Loading / error */
+    .detail-state {
+      padding: 120px 0; text-align: center;
+      font-size: 0.82rem; color: var(--mid);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .project-detail { padding: 32px 24px 80px; }
+      .project-body {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+      .detail-slider { position: static; }
+      .detail-track img { max-height: 60vw; }
+      .project-header { flex-direction: column; align-items: flex-start; }
+      .project-header-right { align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="nav-logo">Miklies</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="work.html">Work</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <div class="project-detail" id="project-detail">
+      <div class="detail-state">Loading…</div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p><a href="admin.html" style="color:inherit; text-decoration:none;">©</a> 2026 Miklies</p>
+    <div class="footer-links">
+      <a href="mailto:hello@miklies.com">Email</a>
+      <a href="#" target="_blank" rel="noopener">Instagram</a>
+      <a href="#" target="_blank" rel="noopener">LinkedIn</a>
+    </div>
+  </footer>
+
+  <script src="supabase-config.js"></script>
+  <script src="nav.js"></script>
+  <script>
+    const { createClient } = supabase;
+    const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const wrap = document.getElementById('project-detail');
+    const params = new URLSearchParams(window.location.search);
+    const projectId = params.get('id');
+
+    let images = [];
+    let current = 0;
+
+    function getImageUrl(path) {
+      if (!path) return null;
+      if (path.startsWith('http')) return path;
+      const { data } = db.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+      return data?.publicUrl || null;
+    }
+
+    function goTo(index) {
+      current = Math.max(0, Math.min(index, images.length - 1));
+      document.getElementById('detail-track').style.transform = `translateX(-${current * 100}%)`;
+      document.getElementById('s-prev').disabled = current === 0;
+      document.getElementById('s-next').disabled = current === images.length - 1;
+      document.getElementById('slider-counter').textContent = `${current + 1} / ${images.length}`;
+      document.querySelectorAll('.thumb').forEach((t, i) => t.classList.toggle('active', i === current));
+    }
+
+    async function loadProject() {
+      if (!projectId) {
+        wrap.innerHTML = `<div class="detail-state">No project specified. <a href="work.html" style="color:var(--ink)">← Back to work</a></div>`;
+        return;
+      }
+
+      try {
+        const { data: p, error } = await db.from('projects').select('*').eq('id', projectId).single();
+        if (error || !p) throw new Error('Not found');
+
+        // Update page title
+        document.title = `${p.title} — Miklies`;
+
+        // Collect all images
+        const allPaths = [p.image_path, ...(p.images || [])].filter(Boolean);
+        images = allPaths.map(path => getImageUrl(path)).filter(Boolean);
+        const hasImages = images.length > 0;
+        const hasMultiple = images.length > 1;
+
+        wrap.innerHTML = `
+          <a href="work.html" class="back-link">← All projects</a>
+
+          <div class="project-header">
+            <div class="project-header-left">
+              <span class="project-detail-category">${p.category || ''}</span>
+              <h1 class="project-detail-title">${p.title}</h1>
+            </div>
+            <div class="project-header-right">
+              ${p.year ? `<span class="project-detail-year">${p.year}</span>` : ''}
+              ${p.link ? `<a href="${p.link}" class="project-ext-link" target="_blank" rel="noopener">Visit project →</a>` : ''}
+            </div>
+          </div>
+
+          <div class="project-body">
+            <!-- Slider -->
+            <div>
+              <div class="detail-slider">
+                <div class="detail-track" id="detail-track">
+                  ${hasImages
+                    ? images.map(url => `<img src="${url}" alt="${p.title}">`).join('')
+                    : `<div class="no-image">No images</div>`}
+                </div>
+              </div>
+
+              ${hasImages ? `
+              <div class="slider-controls">
+                <div class="slider-arrows">
+                  <button class="s-btn" id="s-prev" ${!hasMultiple ? 'disabled' : ''}>←</button>
+                  <button class="s-btn" id="s-next" ${!hasMultiple ? 'disabled' : ''}>→</button>
+                </div>
+                <span class="slider-counter" id="slider-counter">1 / ${images.length}</span>
+              </div>
+              ${hasMultiple ? `
+              <div class="thumb-strip" id="thumb-strip">
+                ${images.map((url, i) => `<img class="thumb${i === 0 ? ' active' : ''}" src="${url}" data-i="${i}" alt="Image ${i+1}">`).join('')}
+              </div>` : ''}` : ''}
+            </div>
+
+            <!-- Info -->
+            <div class="project-info-col">
+              ${p.description ? `<p class="project-detail-desc">${p.description}</p>` : ''}
+            </div>
+          </div>
+        `;
+
+        // Wire up slider if images exist
+        if (hasImages) {
+          document.getElementById('s-prev')?.addEventListener('click', () => goTo(current - 1));
+          document.getElementById('s-next')?.addEventListener('click', () => goTo(current + 1));
+          document.querySelectorAll('.thumb').forEach(t => {
+            t.addEventListener('click', () => goTo(parseInt(t.dataset.i)));
+          });
+
+          // Keyboard nav
+          document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowLeft') goTo(current - 1);
+            if (e.key === 'ArrowRight') goTo(current + 1);
+          });
+
+          goTo(0);
+        }
+
+      } catch (err) {
+        console.error(err);
+        wrap.innerHTML = `<div class="detail-state">Project not found. <a href="work.html" style="color:var(--ink)">← Back to work</a></div>`;
+      }
+    }
+
+    loadProject();
+  </script>
+</body>
+</html>
